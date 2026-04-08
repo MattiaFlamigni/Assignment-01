@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 
 public class Board {
@@ -34,24 +35,52 @@ public class Board {
     	
     	for (var b: balls) {
     		b.updateState(dt, this);
-    	}       	
-    	
-    	for (int i = 0; i < balls.size() - 1; i++) {
+    	}
+
+        for (int i = 0; i < balls.size() - 1; i++) {
             for (int j = i + 1; j < balls.size(); j++) {
-                Ball.resolveCollision(balls.get(i), balls.get(j));
+                if (areColliding(balls.get(i), balls.get(j))) {
+                    Ball.resolveCollision(balls.get(i), balls.get(j));
+                    balls.get(i).setLastTouchedBy(Ball.LastTouchedBy.NONE);
+                    balls.get(j).setLastTouchedBy(Ball.LastTouchedBy.NONE);
+                }
             }
         }
         Ball.resolveCollision(humanBall, botBall);
     	for (var b: balls) {
-    		Ball.resolveCollision(humanBall, b);
-            Ball.resolveCollision(botBall, b);
+            if (areColliding(humanBall, b)) {
+                b.setLastTouchedBy(Ball.LastTouchedBy.HUMAN);
+                Ball.resolveCollision(humanBall, b);
+            }
+
+            if (areColliding(botBall, b)) {
+                b.setLastTouchedBy(Ball.LastTouchedBy.BOT);
+                Ball.resolveCollision(botBall, b);
+            }
     	}
 
-        balls.removeIf(this::isInsideHole);
-        //todo: aggiornare punteggio
 
 
-    	   	    	
+        var ballsToRemove = new ArrayList<Ball>();
+
+        for (var b : balls) {
+            if (isInsideHole(b)) {
+                if (b.getLastTouchedBy() == Ball.LastTouchedBy.HUMAN) {
+                    humanScore++;
+                } else if (b.getLastTouchedBy() == Ball.LastTouchedBy.BOT) {
+                    botScore++;
+                }
+                ballsToRemove.add(b);
+            }
+        }
+
+        balls.removeAll(ballsToRemove);
+
+
+
+
+
+
     }
     
     public List<Ball> getBalls(){
@@ -85,5 +114,12 @@ public class Board {
         double distRight = Math.hypot(dxRight, dyRight);
 
         return distLeft <= holeRadius || distRight <= holeRadius;
+    }
+
+    private boolean areColliding(Ball a, Ball b) {
+        double dx = b.getPos().x() - a.getPos().x();
+        double dy = b.getPos().y() - a.getPos().y();
+        double dist = Math.hypot(dx, dy);
+        return dist < a.getRadius() + b.getRadius();
     }
 }

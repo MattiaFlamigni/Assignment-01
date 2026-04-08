@@ -28,6 +28,8 @@ public class ViewModel {
         player = new BallViewInfo(p.getPos(), p.getRadius());
         humanBall = player;
         botBall = new BallViewInfo(bot.getPos(), bot.getRadius());
+		humanScore = board.getHumanScore();
+		botScore = board.getBotScore();
 	}
 	
 	public synchronized ArrayList<BallViewInfo> getBalls(){

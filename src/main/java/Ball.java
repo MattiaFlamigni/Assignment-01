@@ -6,13 +6,27 @@ public class Ball {
     private double mass;   
     
     private static double FRICTION_FACTOR = 0.25; 	/* 0 minimum */
-    private static double RESTITUTION_FACTOR = 1; 
+    private static double RESTITUTION_FACTOR = 1;
+
+
+
+    enum LastTouchedBy {
+        HUMAN,
+        BOT,
+        NONE
+    }
+    private LastTouchedBy lastTouchedBy;
+
+    public LastTouchedBy getLastTouchedBy() {
+        return lastTouchedBy;
+    }
 
     public Ball(P2d pos, double radius, double mass, V2d vel){
        this.pos = pos;
        this.radius = radius;
        this.mass = mass;
        this.vel = vel;
+       lastTouchedBy = LastTouchedBy.NONE;
     }
 
     public void updateState(long dt, Board ctx){
@@ -131,6 +145,9 @@ public class Ball {
         }
     }
 
+    public void setLastTouchedBy(LastTouchedBy lastTouchedBy) {
+        this.lastTouchedBy = lastTouchedBy;
+    }
     
     public P2d getPos(){        
     	return pos;
