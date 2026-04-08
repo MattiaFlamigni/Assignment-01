@@ -8,7 +8,12 @@ public class LargeBoardConf implements BoardConf {
 		return  new Ball(new P2d(0, -0.75), 0.05, 1.5, new V2d(0,1)); 
 	}
 
-	@Override
+    @Override
+    public Ball getBotBall() {
+        return new Ball(new P2d(0, -0.75), 0.05, 1.5, new V2d(0,0));
+    }
+
+    @Override
 	public List<Ball> getSmallBalls() {		
 		var ballRadius = 0.01;
         var balls = new ArrayList<Ball>();

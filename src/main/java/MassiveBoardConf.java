@@ -5,10 +5,15 @@ public class MassiveBoardConf implements BoardConf {
 
 	@Override
 	public Ball getPlayerBall() {
-		return  new Ball(new P2d(0, -0.75), 0.05, 1.5, new V2d(0,0)); 
+		return  new Ball(new P2d(-0.5, -0.75), 0.05, 1.5, new V2d(0,0));
 	}
 
-	@Override
+    @Override
+    public Ball getBotBall() {
+        return new Ball(new P2d(0.5, -0.75), 0.05, 1.5, new V2d(0,0));
+    }
+
+    @Override
 	public List<Ball> getSmallBalls() {		
 		var ballRadius = 0.01;
         var balls = new ArrayList<Ball>();

@@ -8,7 +8,12 @@ public class MinimalBoardConf implements BoardConf {
     	return new Ball(new P2d(0, 0), 0.06, 1, new V2d(0,0.5)); 
 	}
 
-	@Override
+    @Override
+    public Ball getBotBall() {
+        return  new Ball(new P2d(0, 0), 0.06, 1, new V2d(0,0.5));
+    }
+
+    @Override
 	public List<Ball> getSmallBalls() {		
         var balls = new ArrayList<Ball>();
     	var b1 = new Ball(new P2d(0, 0.5), 0.05, 0.75, new V2d(0,0));

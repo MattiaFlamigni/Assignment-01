@@ -24,9 +24,10 @@ public class ViewModel {
 		}
 		this.framePerSec = framePerSec;
 		var p = board.getPlayerBall();
-		player = new BallViewInfo(p.getPos(), p.getRadius());
-		humanBall = player;
-		botBall = new BallViewInfo(new P2d(0.35, -0.75), p.getRadius());
+        var bot = board.getBotBall();
+        player = new BallViewInfo(p.getPos(), p.getRadius());
+        humanBall = player;
+        botBall = new BallViewInfo(bot.getPos(), bot.getRadius());
 	}
 	
 	public synchronized ArrayList<BallViewInfo> getBalls(){

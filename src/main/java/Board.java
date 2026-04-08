@@ -3,20 +3,25 @@ import java.util.List;
 public class Board {
 
     private List<Ball> balls;    
-    private Ball playerBall;
+    private Ball humanBall;
+    private Ball botBall;
     private Boundary bounds;
+
+
     
     public Board(){} 
     
     public void init(BoardConf conf) {
-    	balls = conf.getSmallBalls();    	
-    	playerBall = conf.getPlayerBall(); 
+    	balls = conf.getSmallBalls();
+    	humanBall = conf.getPlayerBall();
+        botBall = conf.getBotBall();
     	bounds = conf.getBoardBoundary();
     }
     
     public void updateState(long dt) {
 
-    	playerBall.updateState(dt, this);
+    	humanBall.updateState(dt, this);
+        botBall.updateState(dt, this);
     	
     	for (var b: balls) {
     		b.updateState(dt, this);
@@ -27,8 +32,10 @@ public class Board {
                 Ball.resolveCollision(balls.get(i), balls.get(j));
             }
         }
+        Ball.resolveCollision(humanBall, botBall);
     	for (var b: balls) {
-    		Ball.resolveCollision(playerBall, b);
+    		Ball.resolveCollision(humanBall, b);
+            Ball.resolveCollision(botBall, b);
     	} 
     	   	    	
     }
@@ -38,7 +45,10 @@ public class Board {
     }
     
     public Ball getPlayerBall() {
-    	return playerBall;
+    	return humanBall;
+    }
+    public Ball getBotBall() {
+        return botBall;
     }
     
     public  Boundary getBounds(){
