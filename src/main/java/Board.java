@@ -6,6 +6,12 @@ public class Board {
     private Ball humanBall;
     private Ball botBall;
     private Boundary bounds;
+    private int humanScore;
+    private int botScore;
+    private P2d leftHole;
+    private P2d rightHole;
+    private double holeRadius;
+
 
 
     
@@ -16,6 +22,9 @@ public class Board {
     	humanBall = conf.getPlayerBall();
         botBall = conf.getBotBall();
     	bounds = conf.getBoardBoundary();
+        leftHole = new P2d(bounds.x0(), bounds.y1());
+        rightHole = new P2d(bounds.x1(), bounds.y1());
+        holeRadius = 0.10;
     }
     
     public void updateState(long dt) {
@@ -36,7 +45,12 @@ public class Board {
     	for (var b: balls) {
     		Ball.resolveCollision(humanBall, b);
             Ball.resolveCollision(botBall, b);
-    	} 
+    	}
+
+        balls.removeIf(this::isInsideHole);
+        //todo: aggiornare punteggio
+
+
     	   	    	
     }
     
@@ -53,5 +67,23 @@ public class Board {
     
     public  Boundary getBounds(){
         return bounds;
+    }
+
+    public int getHumanScore() {
+        return humanScore;
+    }
+    public int getBotScore() {
+        return botScore;
+    }
+    private boolean isInsideHole(Ball b) {
+        double dxLeft = b.getPos().x() - leftHole.x();
+        double dyLeft = b.getPos().y() - leftHole.y();
+        double distLeft = Math.hypot(dxLeft, dyLeft);
+
+        double dxRight = b.getPos().x() - rightHole.x();
+        double dyRight = b.getPos().y() - rightHole.y();
+        double distRight = Math.hypot(dxRight, dyRight);
+
+        return distLeft <= holeRadius || distRight <= holeRadius;
     }
 }
