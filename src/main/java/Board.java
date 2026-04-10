@@ -14,6 +14,12 @@ public class Board {
     private double holeRadius;
     private boolean gameOver;
     private Ball.Type winner;
+    private boolean useThreads = false;
+
+    private int n_threads = 4;
+    private Thread[] workers = new Thread[n_threads];
+    private long movingBallsTotalNanos;
+    private long movingBallsMeasurements;
 
     public Board() {
     }
@@ -21,6 +27,8 @@ public class Board {
     public void init(BoardConf conf) {
         gameOver = false;
         winner = Ball.Type.BOT;
+        humanScore = 0;
+        botScore = 0;
         balls = conf.getSmallBalls();
         humanBall = conf.getPlayerBall();
         botBall = conf.getBotBall();
@@ -28,10 +36,14 @@ public class Board {
         leftHole = new P2d(bounds.x0(), bounds.y1());
         rightHole = new P2d(bounds.x1(), bounds.y1());
         holeRadius = 0.10;
+        resetMovingBallsMetrics();
     }
 
     public void updateState(long dt) {
+        long t0 = System.nanoTime();
         updateMovingBalls(dt);
+        movingBallsTotalNanos += (System.nanoTime() - t0);
+        movingBallsMeasurements++;
         resolveSmallBallCollisions();
         resolvePlayerCollisions();
         handlePocketedBalls();
@@ -42,8 +54,33 @@ public class Board {
     private void updateMovingBalls(long dt) {
         humanBall.updateState(dt, this);
         botBall.updateState(dt, this);
-        for (var b : balls) {
-            b.updateState(dt, this);
+
+        if(useThreads) {
+            for (int t = 0; t < n_threads; t++) {
+                int start = t * balls.size() / n_threads;
+                int end = (t + 1) * balls.size() / n_threads;
+
+                workers[t] = new Thread(() -> {
+                    for (int i = start; i < end; i++) {
+                        balls.get(i).updateState(dt, this);
+                    }
+                });
+
+                workers[t].start();
+            }
+
+            for (int t = 0; t < n_threads; t++) {
+                try {
+                    workers[t].join();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Worker thread interrupted", e);
+                }
+            }
+        } else {
+            for (var b : balls) {
+                b.updateState(dt, this);
+            }
         }
     }
 
@@ -185,5 +222,33 @@ public class Board {
 
     public void kickHumanBall(V2d impulse) {
         humanBall.kick(humanBall.getVel().sum(impulse));
+    }
+
+    public void setUseThreads(boolean useThreads) {
+        this.useThreads = useThreads;
+    }
+
+    public boolean isUsingThreads() {
+        return useThreads;
+    }
+
+    public void resetMovingBallsMetrics() {
+        movingBallsTotalNanos = 0L;
+        movingBallsMeasurements = 0L;
+    }
+
+    public long getMovingBallsTotalNanos() {
+        return movingBallsTotalNanos;
+    }
+
+    public long getMovingBallsMeasurements() {
+        return movingBallsMeasurements;
+    }
+
+    public double getAverageMovingBallsNanos() {
+        if (movingBallsMeasurements == 0) {
+            return 0.0;
+        }
+        return movingBallsTotalNanos / (double) movingBallsMeasurements;
     }
 }
