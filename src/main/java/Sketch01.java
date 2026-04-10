@@ -18,7 +18,7 @@ public class Sketch01 {
 		board.init(boardConf);
 		
 		ViewModel viewModel = new ViewModel();
-        GameController controller = new GameController(board, viewModel);
+        GameController controller = new GameController(board, boardConf, viewModel);
         View view = new View(viewModel, 1200, 800, controller);
         controller.attachView(view);
         controller.start();

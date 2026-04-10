@@ -9,6 +9,7 @@ public class ViewFrame extends JFrame {
     private ViewModel model;
     private RenderSynch sync;
     private HumanInputListener inputListener;
+    private JButton restartButton;
     
     public ViewFrame(ViewModel model, int w, int h, HumanInputListener listener){
         this.model = model;
@@ -19,6 +20,7 @@ public class ViewFrame extends JFrame {
         setResizable(false);
         panel = new VisualiserPanel(w, h);
         getContentPane().add(panel);
+        configureRestartButton(w, h);
         bindHumanInput();
         addWindowListener(new WindowAdapter(){
           public void windowClosing(WindowEvent ev){
@@ -45,6 +47,7 @@ public class ViewFrame extends JFrame {
     }
      
     public void render(){
+        restartButton.setVisible(model.isGameOver());
         long nf = sync.nextFrameToRender();
         panel.repaint();
         try {
@@ -52,6 +55,16 @@ public class ViewFrame extends JFrame {
         } catch (InterruptedException ex) {
            ex.printStackTrace();
         }
+    }
+
+    private void configureRestartButton(int w, int h) {
+        restartButton = new JButton("Restart");
+        restartButton.setFocusable(false);
+        restartButton.setVisible(false);
+        restartButton.setBounds(w / 2 - 70, h / 2 + 55, 140, 34);
+        restartButton.addActionListener(e -> inputListener.onRestartRequested());
+        panel.setLayout(null);
+        panel.add(restartButton);
     }
         
     public class VisualiserPanel extends JPanel {
@@ -120,7 +133,8 @@ public class ViewFrame extends JFrame {
            g2.drawString("FPS: " + model.getFramePerSec(), 20, 35);
 
            if(model.isGameOver()){
-               g2.drawString("Winner: " + model.getWinner(), 20, 45);
+               drawGameOverOverlay(g2);
+
            }
 
            sync.notifyFrameRendered();
@@ -151,6 +165,30 @@ public class ViewFrame extends JFrame {
             int y0 = (int) (oy - hole.pos().y() * delta);
             g2.setColor(Color.BLACK);
             g2.fillOval(x0 - r, y0 - r, r * 2, r * 2);
+        }
+
+        private void drawGameOverOverlay(Graphics2D g2) {
+            String winnerText = model.getWinner() + " WINS";
+            String subtitle = "Game Over";
+
+            g2.setColor(new Color(255, 255, 255, 210));
+            g2.fillRoundRect(getWidth() / 2 - 220, getHeight() / 2 - 95, 440, 160, 28, 28);
+
+            g2.setColor(Color.BLACK);
+            g2.setStroke(new BasicStroke(2));
+            g2.drawRoundRect(getWidth() / 2 - 220, getHeight() / 2 - 95, 440, 160, 28, 28);
+
+            g2.setFont(new Font("Arial", Font.BOLD, 38));
+            FontMetrics winnerMetrics = g2.getFontMetrics();
+            int winnerX = (getWidth() - winnerMetrics.stringWidth(winnerText)) / 2;
+            int winnerY = getHeight() / 2 - 10;
+            g2.drawString(winnerText, winnerX, winnerY);
+
+            g2.setFont(new Font("Arial", Font.PLAIN, 20));
+            FontMetrics subtitleMetrics = g2.getFontMetrics();
+            int subtitleX = (getWidth() - subtitleMetrics.stringWidth(subtitle)) / 2;
+            int subtitleY = winnerY + 38;
+            g2.drawString(subtitle, subtitleX, subtitleY);
         }
     }
 }
