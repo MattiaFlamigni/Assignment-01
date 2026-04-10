@@ -12,11 +12,13 @@ public class Board {
     private P2d leftHole;
     private P2d rightHole;
     private double holeRadius;
+    private boolean gameOver;
 
     public Board() {
     }
 
     public void init(BoardConf conf) {
+        gameOver = false;
         balls = conf.getSmallBalls();
         humanBall = conf.getPlayerBall();
         botBall = conf.getBotBall();
@@ -31,6 +33,7 @@ public class Board {
         resolveSmallBallCollisions();
         resolvePlayerCollisions();
         handlePocketedBalls();
+        checkNoMoreSmallBalls();
     }
 
     private void updateMovingBalls(long dt) {
@@ -85,6 +88,22 @@ public class Board {
             ballsToRemove.add(b);
         }
         balls.removeAll(ballsToRemove);
+    }
+
+    private boolean checkNoMoreSmallBalls(){
+        if (balls.isEmpty()){
+            gameOver = true;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public Ball getWinner(){
+        return humanScore>botScore ? humanBall : botBall;
     }
 
     public List<Ball> getBalls() {

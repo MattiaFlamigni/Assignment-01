@@ -13,13 +13,21 @@ public class ViewModel {
 	private int humanScore;
 	private int botScore;
 	private int framePerSec;
+    private boolean gameOver;
+    private Ball.Type winner;
 	
 	public ViewModel() {
+        gameOver = false;
+        winner = Ball.Type.BOT;
+
 		balls = new ArrayList<BallViewInfo>();
 		framePerSec = 0;
 	}
 	
 	public synchronized void update(Board board, int framePerSec) {
+        gameOver = board.isGameOver();
+        winner = board.getWinner().getType();
+
 		balls.clear();
 		for (var b: board.getBalls()) {
 			balls.add(new BallViewInfo(b.getPos(), b.getRadius()));
@@ -69,5 +77,13 @@ public class ViewModel {
 	public synchronized HoleViewInfo getRightHole() {
 		return rightHole;
 	}
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public Ball.Type getWinner() {
+        return winner;
+    }
 	
 }

@@ -33,11 +33,12 @@ public class GameController implements HumanInputListener {
         this.lastUpdateTime = this.startTime;
         this.lastKickTimeBot = this.startTime;
 
-        while (true) {
+        while (!board.isGameOver()) {
             updateBot();
             updateBoard();
             renderFrame();
         }
+        renderFrame();
     }
 
     @Override

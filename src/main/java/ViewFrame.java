@@ -119,6 +119,10 @@ public class ViewFrame extends JFrame {
            g2.drawString("Balls: " + model.getBalls().size(), 20, 20);
            g2.drawString("FPS: " + model.getFramePerSec(), 20, 35);
 
+           if(model.isGameOver()){
+               g2.drawString("Winner: " + model.getWinner(), 20, 45);
+           }
+
            sync.notifyFrameRendered();
         }
 
