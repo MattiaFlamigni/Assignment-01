@@ -16,7 +16,7 @@ public class PerformanceBenchmark {
             board.updateState(dt);
         }
 
-        board.resetMovingBallsMetrics();
+        board.resetPerformanceMetrics();
         long totalUpdateStateNanos = 0L;
 
         for (int i = 0; i < frames; i++) {
@@ -26,11 +26,13 @@ public class PerformanceBenchmark {
         }
 
         double avgMovingMs = board.getAverageMovingBallsNanos() / 1_000_000.0;
+        double avgCollisionMs = board.getAverageResolveSmallBallsCollisionNanos() / 1_000_000.0;
         double avgTotalMs = (totalUpdateStateNanos / (double) frames) / 1_000_000.0;
         String mode = useThreads ? "platform-threads" : "sequential";
 
         System.out.println("Mode: " + mode);
         System.out.println("Average updateMovingBalls: " + avgMovingMs + " ms");
+        System.out.println("Average resolveSmallBallCollisions: " + avgCollisionMs + " ms");
         System.out.println("Average updateState: " + avgTotalMs + " ms");
         System.out.println();
     }

@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Board {
 
@@ -14,12 +16,15 @@ public class Board {
     private double holeRadius;
     private boolean gameOver;
     private Ball.Type winner;
-    private boolean useThreads = false;
+    private boolean useThreads = true;
 
     private int n_threads = 4;
     private Thread[] workers = new Thread[n_threads];
     private long movingBallsTotalNanos;
     private long movingBallsMeasurements;
+    private long resolveSmallBallsCollisionTotalNanos;
+    private long resolveSmallBallsCollisionMeasurements;
+    private double collisionCellSize;
 
     public Board() {
     }
@@ -36,15 +41,20 @@ public class Board {
         leftHole = new P2d(bounds.x0(), bounds.y1());
         rightHole = new P2d(bounds.x1(), bounds.y1());
         holeRadius = 0.10;
-        resetMovingBallsMetrics();
+        collisionCellSize = computeCollisionCellSize();
+        resetPerformanceMetrics();
     }
 
     public void updateState(long dt) {
-        long t0 = System.nanoTime();
+        long movingT0 = System.nanoTime();
         updateMovingBalls(dt);
-        movingBallsTotalNanos += (System.nanoTime() - t0);
+        movingBallsTotalNanos += (System.nanoTime() - movingT0);
         movingBallsMeasurements++;
+
+        long t0 = System.nanoTime();
         resolveSmallBallCollisions();
+        resolveSmallBallsCollisionTotalNanos += (System.nanoTime() - t0);
+        resolveSmallBallsCollisionMeasurements++;
         resolvePlayerCollisions();
         handlePocketedBalls();
         checkPlayerBallIsInHole();
@@ -85,10 +95,102 @@ public class Board {
     }
 
     private void resolveSmallBallCollisions() {
-        for (int i = 0; i < balls.size() - 1; i++) {
-            for (int j = i + 1; j < balls.size(); j++) {
-                Ball first = balls.get(i);
-                Ball second = balls.get(j);
+        Map<Long, List<Ball>> grid = buildCollisionGrid();
+        List<Map.Entry<Long, List<Ball>>> entries = new ArrayList<>(grid.entrySet());
+
+        if (!useThreads) {
+            processCollisionCells(entries, grid, 0, entries.size());
+            return;
+        }
+
+        for (int t = 0; t < n_threads; t++) {
+            int start = t * entries.size() / n_threads;
+            int end = (t + 1) * entries.size() / n_threads;
+            workers[t] = new Thread(() -> processCollisionCells(entries, grid, start, end));
+            workers[t].start();
+        }
+
+        for (int t = 0; t < n_threads; t++) {
+            try {
+                workers[t].join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Worker thread interrupted", e);
+            }
+        }
+    }
+
+    private void processCollisionCells(List<Map.Entry<Long, List<Ball>>> entries,
+                                       Map<Long, List<Ball>> grid,
+                                       int start,
+                                       int end) {
+        for (int entryIndex = start; entryIndex < end; entryIndex++) {
+            Map.Entry<Long, List<Ball>> entry = entries.get(entryIndex);
+            long cellKey = entry.getKey();
+            List<Ball> cellBalls = entry.getValue();
+            int cellX = unpackCellX(cellKey);
+            int cellY = unpackCellY(cellKey);
+
+            resolveBallPairs(cellBalls, cellBalls);
+
+            for (int offsetX = -1; offsetX <= 1; offsetX++) {
+                for (int offsetY = -1; offsetY <= 1; offsetY++) {
+                    if (offsetX == 0 && offsetY == 0) {
+                        continue;
+                    }
+                    int neighborX = cellX + offsetX;
+                    int neighborY = cellY + offsetY;
+                    if (!isCanonicalNeighbor(cellX, cellY, neighborX, neighborY)) {
+                        continue;
+                    }
+                    List<Ball> neighborBalls = grid.get(packCell(neighborX, neighborY));
+                    if (neighborBalls != null) {
+                        resolveBallPairs(cellBalls, neighborBalls);
+                    }
+                }
+            }
+        }
+    }
+
+    private Map<Long, List<Ball>> buildCollisionGrid() {
+        Map<Long, List<Ball>> grid = new HashMap<>();
+        for (Ball ball : balls) {
+            int cellX = (int) Math.floor((ball.getPos().x() - bounds.x0()) / collisionCellSize);
+            int cellY = (int) Math.floor((ball.getPos().y() - bounds.y0()) / collisionCellSize);
+            long key = packCell(cellX, cellY);
+            grid.computeIfAbsent(key, ignored -> new ArrayList<>()).add(ball);
+        }
+        return grid;
+    }
+
+    private void resolveBallPairs(List<Ball> firstGroup, List<Ball> secondGroup) {
+        if (firstGroup == secondGroup) {
+            for (int i = 0; i < firstGroup.size() - 1; i++) {
+                for (int j = i + 1; j < firstGroup.size(); j++) {
+                    resolveBallPair(firstGroup.get(i), firstGroup.get(j));
+                }
+            }
+            return;
+        }
+        for (Ball first : firstGroup) {
+            for (Ball second : secondGroup) {
+                resolveBallPair(first, second);
+            }
+        }
+    }
+
+    private void resolveBallPair(Ball first, Ball second) {
+        Object firstLock = first;
+        Object secondLock = second;
+
+        if (System.identityHashCode(firstLock) > System.identityHashCode(secondLock)) {
+            Object temp = firstLock;
+            firstLock = secondLock;
+            secondLock = temp;
+        }
+
+        synchronized (firstLock) {
+            synchronized (secondLock) {
                 if (areColliding(first, second)) {
                     Ball.resolveCollision(first, second);
                     first.setLastTouchedBy(Ball.LastTouchedBy.NONE);
@@ -96,6 +198,30 @@ public class Board {
                 }
             }
         }
+    }
+
+    private boolean isCanonicalNeighbor(int cellX, int cellY, int neighborX, int neighborY) {
+        return neighborX > cellX || (neighborX == cellX && neighborY > cellY);
+    }
+
+    private long packCell(int cellX, int cellY) {
+        return (((long) cellX) << 32) ^ (cellY & 0xffffffffL);
+    }
+
+    private int unpackCellX(long cellKey) {
+        return (int) (cellKey >> 32);
+    }
+
+    private int unpackCellY(long cellKey) {
+        return (int) cellKey;
+    }
+
+    private double computeCollisionCellSize() {
+        double maxRadius = 0.0;
+        for (Ball ball : balls) {
+            maxRadius = Math.max(maxRadius, ball.getRadius());
+        }
+        return Math.max(0.05, maxRadius * 4.0);
     }
 
     private void resolvePlayerCollisions() {
@@ -232,9 +358,11 @@ public class Board {
         return useThreads;
     }
 
-    public void resetMovingBallsMetrics() {
+    public void resetPerformanceMetrics() {
         movingBallsTotalNanos = 0L;
         movingBallsMeasurements = 0L;
+        resolveSmallBallsCollisionTotalNanos = 0L;
+        resolveSmallBallsCollisionMeasurements = 0L;
     }
 
     public long getMovingBallsTotalNanos() {
@@ -250,5 +378,20 @@ public class Board {
             return 0.0;
         }
         return movingBallsTotalNanos / (double) movingBallsMeasurements;
+    }
+
+    public long getResolveSmallBallsCollisionTotalNanos() {
+        return resolveSmallBallsCollisionTotalNanos;
+    }
+
+    public long getResolveSmallBallsCollisionMeasurements() {
+        return resolveSmallBallsCollisionMeasurements;
+    }
+
+    public double getAverageResolveSmallBallsCollisionNanos() {
+        if (resolveSmallBallsCollisionMeasurements == 0) {
+            return 0.0;
+        }
+        return resolveSmallBallsCollisionTotalNanos / (double) resolveSmallBallsCollisionMeasurements;
     }
 }
