@@ -55,11 +55,8 @@ public class ViewFrame extends JFrame {
            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
            g2.clearRect(0, 0, getWidth(), getHeight());
             
-           // Buchi negli angoli alti
-           g2.setColor(Color.BLACK);
-           int holeRadius = 25;
-           g2.fillOval(-holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2);
-           g2.fillOval(getWidth() - holeRadius, -holeRadius, holeRadius * 2, holeRadius * 2);
+           drawHole(g2, model.getLeftHole());
+           drawHole(g2, model.getRightHole());
 
            // Assi di riferimento
            g2.setColor(Color.LIGHT_GRAY);
@@ -119,6 +116,17 @@ public class ViewFrame extends JFrame {
             FontMetrics fm = g2.getFontMetrics();
             int textX = x0 - (fm.stringWidth(label) / 2);
             g2.drawString(label, textX, y0 + 5);
+        }
+
+        private void drawHole(Graphics2D g2, HoleViewInfo hole) {
+            if (hole == null) {
+                return;
+            }
+            int r = (int) (hole.radius() * delta);
+            int x0 = (int) (ox + hole.pos().x() * delta);
+            int y0 = (int) (oy - hole.pos().y() * delta);
+            g2.setColor(Color.BLACK);
+            g2.fillOval(x0 - r, y0 - r, r * 2, r * 2);
         }
     }
 }

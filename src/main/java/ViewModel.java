@@ -1,13 +1,15 @@
 import java.util.ArrayList;
 
 record BallViewInfo(P2d pos, double radius) {}
+record HoleViewInfo(P2d pos, double radius) {}
 
 public class ViewModel {
 
 	private ArrayList<BallViewInfo> balls;
-	private BallViewInfo player;
 	private BallViewInfo humanBall;
 	private BallViewInfo botBall;
+	private HoleViewInfo leftHole;
+	private HoleViewInfo rightHole;
 	private int humanScore;
 	private int botScore;
 	private int framePerSec;
@@ -23,11 +25,12 @@ public class ViewModel {
 			balls.add(new BallViewInfo(b.getPos(), b.getRadius()));
 		}
 		this.framePerSec = framePerSec;
-		var p = board.getPlayerBall();
+		var p = board.getHumanBall();
         var bot = board.getBotBall();
-        player = new BallViewInfo(p.getPos(), p.getRadius());
-        humanBall = player;
+        humanBall = new BallViewInfo(p.getPos(), p.getRadius());
         botBall = new BallViewInfo(bot.getPos(), bot.getRadius());
+		leftHole = new HoleViewInfo(board.getLeftHole(), board.getHoleRadius());
+		rightHole = new HoleViewInfo(board.getRightHole(), board.getHoleRadius());
 		humanScore = board.getHumanScore();
 		botScore = board.getBotScore();
 	}
@@ -41,10 +44,6 @@ public class ViewModel {
 
 	public synchronized int getFramePerSec() {
 		return framePerSec;
-	}
-
-	public synchronized BallViewInfo getPlayerBall() {
-		return player;
 	}
 
 	public synchronized BallViewInfo getHumanBall() {
@@ -63,9 +62,12 @@ public class ViewModel {
 		return botScore;
 	}
 
-	public synchronized void setScores(int humanScore, int botScore) {
-		this.humanScore = humanScore;
-		this.botScore = botScore;
+	public synchronized HoleViewInfo getLeftHole() {
+		return leftHole;
+	}
+
+	public synchronized HoleViewInfo getRightHole() {
+		return rightHole;
 	}
 	
 }

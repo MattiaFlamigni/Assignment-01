@@ -3,7 +3,7 @@ import java.util.List;
 
 public class Board {
 
-    private List<Ball> balls;    
+    private List<Ball> balls;
     private Ball humanBall;
     private Ball botBall;
     private Boundary bounds;
@@ -13,107 +13,129 @@ public class Board {
     private P2d rightHole;
     private double holeRadius;
 
+    public Board() {
+    }
 
-
-    
-    public Board(){} 
-    
     public void init(BoardConf conf) {
-    	balls = conf.getSmallBalls();
-    	humanBall = conf.getPlayerBall();
+        balls = conf.getSmallBalls();
+        humanBall = conf.getPlayerBall();
         botBall = conf.getBotBall();
-    	bounds = conf.getBoardBoundary();
+        bounds = conf.getBoardBoundary();
         leftHole = new P2d(bounds.x0(), bounds.y1());
         rightHole = new P2d(bounds.x1(), bounds.y1());
         holeRadius = 0.10;
     }
-    
+
     public void updateState(long dt) {
+        updateMovingBalls(dt);
+        resolveSmallBallCollisions();
+        resolvePlayerCollisions();
+        handlePocketedBalls();
+    }
 
-    	humanBall.updateState(dt, this);
+    private void updateMovingBalls(long dt) {
+        humanBall.updateState(dt, this);
         botBall.updateState(dt, this);
-    	
-    	for (var b: balls) {
-    		b.updateState(dt, this);
-    	}
+        for (var b : balls) {
+            b.updateState(dt, this);
+        }
+    }
 
+    private void resolveSmallBallCollisions() {
         for (int i = 0; i < balls.size() - 1; i++) {
             for (int j = i + 1; j < balls.size(); j++) {
-                if (areColliding(balls.get(i), balls.get(j))) {
-                    Ball.resolveCollision(balls.get(i), balls.get(j));
-                    balls.get(i).setLastTouchedBy(Ball.LastTouchedBy.NONE);
-                    balls.get(j).setLastTouchedBy(Ball.LastTouchedBy.NONE);
+                Ball first = balls.get(i);
+                Ball second = balls.get(j);
+                if (areColliding(first, second)) {
+                    Ball.resolveCollision(first, second);
+                    first.setLastTouchedBy(Ball.LastTouchedBy.NONE);
+                    second.setLastTouchedBy(Ball.LastTouchedBy.NONE);
                 }
             }
         }
-        Ball.resolveCollision(humanBall, botBall);
-    	for (var b: balls) {
+    }
+
+    private void resolvePlayerCollisions() {
+        if (areColliding(humanBall, botBall)) {
+            Ball.resolveCollision(humanBall, botBall);
+        }
+        for (var b : balls) {
             if (areColliding(humanBall, b)) {
                 b.setLastTouchedBy(Ball.LastTouchedBy.HUMAN);
                 Ball.resolveCollision(humanBall, b);
             }
-
             if (areColliding(botBall, b)) {
                 b.setLastTouchedBy(Ball.LastTouchedBy.BOT);
                 Ball.resolveCollision(botBall, b);
             }
-    	}
-
-
-
-        var ballsToRemove = new ArrayList<Ball>();
-
-        for (var b : balls) {
-            if (isInsideHole(b)) {
-                if (b.getLastTouchedBy() == Ball.LastTouchedBy.HUMAN) {
-                    humanScore++;
-                } else if (b.getLastTouchedBy() == Ball.LastTouchedBy.BOT) {
-                    botScore++;
-                }
-                ballsToRemove.add(b);
-            }
         }
+    }
 
+    private void handlePocketedBalls() {
+        var ballsToRemove = new ArrayList<Ball>();
+        for (var b : balls) {
+            if (!isInsideHole(b)) {
+                continue;
+            }
+            if (b.getLastTouchedBy() == Ball.LastTouchedBy.HUMAN) {
+                humanScore++;
+            } else if (b.getLastTouchedBy() == Ball.LastTouchedBy.BOT) {
+                botScore++;
+            }
+            ballsToRemove.add(b);
+        }
         balls.removeAll(ballsToRemove);
-
-
-
-
-
-
     }
-    
-    public List<Ball> getBalls(){
-    	return balls;
+
+    public List<Ball> getBalls() {
+        return balls;
     }
-    
+
     public Ball getPlayerBall() {
-    	return humanBall;
+        return humanBall;
     }
+
+    public Ball getHumanBall() {
+        return humanBall;
+    }
+
     public Ball getBotBall() {
         return botBall;
     }
-    
-    public  Boundary getBounds(){
+
+    public Boundary getBounds() {
         return bounds;
     }
 
     public int getHumanScore() {
         return humanScore;
     }
+
     public int getBotScore() {
         return botScore;
     }
+
+    public P2d getLeftHole() {
+        return leftHole;
+    }
+
+    public P2d getRightHole() {
+        return rightHole;
+    }
+
+    public double getHoleRadius() {
+        return holeRadius;
+    }
+
     private boolean isInsideHole(Ball b) {
-        double dxLeft = b.getPos().x() - leftHole.x();
-        double dyLeft = b.getPos().y() - leftHole.y();
-        double distLeft = Math.hypot(dxLeft, dyLeft);
+        return isInsideSpecificHole(b, leftHole) || isInsideSpecificHole(b, rightHole);
+    }
 
-        double dxRight = b.getPos().x() - rightHole.x();
-        double dyRight = b.getPos().y() - rightHole.y();
-        double distRight = Math.hypot(dxRight, dyRight);
-
-        return distLeft <= holeRadius || distRight <= holeRadius;
+    private boolean isInsideSpecificHole(Ball b, P2d holeCenter) {
+        double dx = b.getPos().x() - holeCenter.x();
+        double dy = b.getPos().y() - holeCenter.y();
+        double dist = Math.hypot(dx, dy);
+        return dist <= holeRadius;
     }
 
     private boolean areColliding(Ball a, Ball b) {

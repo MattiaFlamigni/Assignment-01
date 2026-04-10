@@ -1,9 +1,15 @@
 public class Ball {
+    enum Type {
+        HUMAN,
+        BOT,
+        SMALL
+    }
     
     private P2d pos;
     private V2d vel;
     private double radius;
-    private double mass;   
+    private double mass;
+    private Type type;
     
     private static double FRICTION_FACTOR = 0.25; 	/* 0 minimum */
     private static double RESTITUTION_FACTOR = 1;
@@ -21,11 +27,12 @@ public class Ball {
         return lastTouchedBy;
     }
 
-    public Ball(P2d pos, double radius, double mass, V2d vel){
+    public Ball(P2d pos, double radius, double mass, V2d vel, Type type){
        this.pos = pos;
        this.radius = radius;
        this.mass = mass;
        this.vel = vel;
+       this.type = type;
        lastTouchedBy = LastTouchedBy.NONE;
     }
 
@@ -147,6 +154,10 @@ public class Ball {
 
     public void setLastTouchedBy(LastTouchedBy lastTouchedBy) {
         this.lastTouchedBy = lastTouchedBy;
+    }
+
+    public Type getType() {
+        return type;
     }
     
     public P2d getPos(){        

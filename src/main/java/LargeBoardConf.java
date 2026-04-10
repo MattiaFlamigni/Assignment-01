@@ -5,12 +5,12 @@ public class LargeBoardConf implements BoardConf {
 
 	@Override
 	public Ball getPlayerBall() {
-		return  new Ball(new P2d(0, -0.75), 0.05, 1.5, new V2d(0,1)); 
+		return  new Ball(new P2d(-0.35, -0.75), 0.05, 1.5, new V2d(0,1), Ball.Type.HUMAN); 
 	}
 
     @Override
     public Ball getBotBall() {
-        return new Ball(new P2d(0, -0.75), 0.05, 1.5, new V2d(0,0));
+        return new Ball(new P2d(0.35, -0.75), 0.05, 1.5, new V2d(0,0), Ball.Type.BOT);
     }
 
     @Override
@@ -22,7 +22,7 @@ public class LargeBoardConf implements BoardConf {
     		for (int col = 0; col < 20; col++) {
         		var px = -0.25 + col*0.025;
         		var py =  row*0.025;
-        		var b = new Ball(new P2d(px, py), ballRadius, 0.25, new V2d(0,0));
+        		var b = new Ball(new P2d(px, py), ballRadius, 0.25, new V2d(0,0), Ball.Type.SMALL);
             	balls.add(b);    			
     		}
     	}		
