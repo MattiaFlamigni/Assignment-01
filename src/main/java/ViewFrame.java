@@ -8,19 +8,39 @@ public class ViewFrame extends JFrame {
     private VisualiserPanel panel;
     private ViewModel model;
     private RenderSynch sync;
+    private HumanInputListener inputListener;
     
-    public ViewFrame(ViewModel model, int w, int h){
+    public ViewFrame(ViewModel model, int w, int h, HumanInputListener listener){
         this.model = model;
+        this.inputListener = listener;
         this.sync = new RenderSynch();
         setTitle("Poool Game");
         setSize(w, h + 25);
         setResizable(false);
         panel = new VisualiserPanel(w, h);
         getContentPane().add(panel);
+        bindHumanInput();
         addWindowListener(new WindowAdapter(){
           public void windowClosing(WindowEvent ev){
              System.exit(-1);
           }
+        });
+    }
+
+    private void bindHumanInput() {
+        bindKey("UP", new V2d(0, 0.2));
+        bindKey("DOWN", new V2d(0, -0.2));
+        bindKey("RIGHT", new V2d(0.2, 0));
+        bindKey("LEFT", new V2d(-0.2, 0));
+    }
+
+    private void bindKey(String key, V2d impulse) {
+        panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(key), key);
+        panel.getActionMap().put(key, new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                inputListener.onHumanImpulse(impulse);
+            }
         });
     }
      

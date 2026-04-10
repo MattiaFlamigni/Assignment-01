@@ -144,4 +144,8 @@ public class Board {
         double dist = Math.hypot(dx, dy);
         return dist < a.getRadius() + b.getRadius();
     }
+
+    public void kickHumanBall(V2d impulse) {
+        humanBall.kick(humanBall.getVel().sum(impulse));
+    }
 }
