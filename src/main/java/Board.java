@@ -13,12 +13,14 @@ public class Board {
     private P2d rightHole;
     private double holeRadius;
     private boolean gameOver;
+    private Ball.Type winner;
 
     public Board() {
     }
 
     public void init(BoardConf conf) {
         gameOver = false;
+        winner = Ball.Type.BOT;
         balls = conf.getSmallBalls();
         humanBall = conf.getPlayerBall();
         botBall = conf.getBotBall();
@@ -33,6 +35,7 @@ public class Board {
         resolveSmallBallCollisions();
         resolvePlayerCollisions();
         handlePocketedBalls();
+        checkPlayerBallIsInHole();
         checkNoMoreSmallBalls();
     }
 
@@ -74,6 +77,20 @@ public class Board {
         }
     }
 
+    private boolean checkPlayerBallIsInHole(){
+        if(isInsideHole(humanBall)){
+            gameOver = true;
+            winner =  Ball.Type.BOT;
+            return true;
+        }
+        if(isInsideHole(botBall)){
+            gameOver = true;
+            winner =  Ball.Type.HUMAN;
+            return true;
+        }
+        return false;
+    }
+
     private void handlePocketedBalls() {
         var ballsToRemove = new ArrayList<Ball>();
         for (var b : balls) {
@@ -93,6 +110,8 @@ public class Board {
     private boolean checkNoMoreSmallBalls(){
         if (balls.isEmpty()){
             gameOver = true;
+            winner = humanScore>botScore ? humanBall.getType() : botBall.getType();
+
             return true;
         }
         return false;
@@ -102,8 +121,8 @@ public class Board {
         return gameOver;
     }
 
-    public Ball getWinner(){
-        return humanScore>botScore ? humanBall : botBall;
+    public Ball.Type getWinner(){
+        return winner;
     }
 
     public List<Ball> getBalls() {

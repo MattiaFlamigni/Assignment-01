@@ -26,7 +26,7 @@ public class ViewModel {
 	
 	public synchronized void update(Board board, int framePerSec) {
         gameOver = board.isGameOver();
-        winner = board.getWinner().getType();
+        winner = board.getWinner();
 
 		balls.clear();
 		for (var b: board.getBalls()) {
