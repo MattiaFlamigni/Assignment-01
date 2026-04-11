@@ -7,7 +7,7 @@ record HoleViewInfo(P2d pos, double radius) {}
 
 public class ViewModel {
 
-	private ArrayList<BallViewInfo> balls;
+	private final ArrayList<BallViewInfo> balls;
 	private BallViewInfo humanBall;
 	private BallViewInfo botBall;
 	private HoleViewInfo leftHole;
@@ -27,6 +27,7 @@ public class ViewModel {
 	}
 	
 	public synchronized void update(Board board, int framePerSec) {
+        //noinspection DuplicatedCode
         gameOver = board.isGameOver();
         winner = board.getWinner();
 

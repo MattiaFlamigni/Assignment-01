@@ -32,6 +32,7 @@ public class GameController implements HumanInputListener {
         }
         resetGame();
 
+        // noinspection InfiniteLoopStatement
         while (true) {
             if (this.restartRequested) {
                 resetGame();
@@ -106,6 +107,7 @@ public class GameController implements HumanInputListener {
         try {
             Thread.sleep(2000);
         } catch (Exception ex) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -113,6 +115,7 @@ public class GameController implements HumanInputListener {
         try {
             Thread.sleep(40);
         } catch (Exception ex) {
+            Thread.currentThread().interrupt();
         }
     }
 }

@@ -9,12 +9,12 @@ public class Ball {
     
     private P2d pos;
     private V2d vel;
-    private double radius;
-    private double mass;
-    private Type type;
+    private final double radius;
+    private final double mass;
+    private final Type type;
     
-    private static double FRICTION_FACTOR = 0.25; 	/* 0 minimum */
-    private static double RESTITUTION_FACTOR = 1;
+    private final static double FRICTION_FACTOR = 0.25; 	/* 0 minimum */
+    private final static double RESTITUTION_FACTOR = 1;
 
 
 
@@ -60,9 +60,10 @@ public class Ball {
      * 
      * Keep the ball inside the boundaries, updating the velocity in the case of bounces
      * 
-     * @param ctx
+     * @param ctx reference to the game board used for boundary checks and environment info
      */
     private void applyBoundaryConstraints(Board ctx){
+        // noinspection DuplicatedCode
         Boundary bounds = ctx.getBounds();
         if (pos.x() + radius > bounds.x1()){
             pos = new P2d(bounds.x1() - radius, pos.y());
@@ -83,15 +84,15 @@ public class Ball {
      * 
      * Resolving collision between 2 balls, updating their position and velocity
      * 
-     * @param a
-     * @param b
+     * @param a a first ball involved in the collision
+     * @param b a second ball involved in the collision
      */
     public static void resolveCollision(Ball a, Ball b) {
         
     	/* check if there is a collision */
     	
     	/* compute dv = b.pos - a.pos vector */
-
+        // noinspection DuplicatedCode
     	double dx   = b.pos.x() - a.pos.x();
         double dy   = b.pos.y() - a.pos.y();
         double dist = Math.hypot(dx, dy);
