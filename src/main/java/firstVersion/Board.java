@@ -396,4 +396,5 @@ public class Board {
         }
         return resolveSmallBallsCollisionTotalNanos / (double) resolveSmallBallsCollisionMeasurements;
     }
+
 }

@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Board {
 
@@ -19,9 +22,9 @@ public class Board {
     private boolean gameOver;
     private Ball.Type winner;
     private boolean useThreads = true;
+    private ExecutorService threadPool;
 
     private int n_threads = 4;
-    private Thread[] workers = new Thread[n_threads];
     private long movingBallsTotalNanos;
     private long movingBallsMeasurements;
     private long resolveSmallBallsCollisionTotalNanos;
@@ -29,6 +32,7 @@ public class Board {
     private double collisionCellSize;
 
     public Board() {
+        threadPool = Executors.newFixedThreadPool(n_threads);
     }
 
     public void init(BoardConf conf) {
@@ -67,7 +71,39 @@ public class Board {
         humanBall.updateState(dt, this);
         botBall.updateState(dt, this);
 
-        if(useThreads) {
+        List<Future<?>> futures = new ArrayList<>();
+
+        if(useThreads){
+
+            for (int t = 0; t < n_threads; t++) {
+                int start = t * balls.size() / n_threads;
+                int end = (t + 1) * balls.size() / n_threads;
+
+                futures.add((threadPool.submit(()->{
+                    for (int i = start; i < end; i++) {
+                        balls.get(i).updateState(dt, this);
+
+                    }
+                })));
+            }
+
+            for (var future : futures) {
+                try{
+                    future.get();
+
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+
+        }else{
+            for (var b : balls) {
+                b.updateState(dt, this);
+            }
+        }
+
+
+        /*if(useThreads) {
             for (int t = 0; t < n_threads; t++) {
                 int start = t * balls.size() / n_threads;
                 int end = (t + 1) * balls.size() / n_threads;
@@ -93,7 +129,7 @@ public class Board {
             for (var b : balls) {
                 b.updateState(dt, this);
             }
-        }
+        }*/
     }
 
     private void resolveSmallBallCollisions() {
@@ -105,21 +141,28 @@ public class Board {
             return;
         }
 
+        List<Future<?>> futures = new ArrayList<>();
         for (int t = 0; t < n_threads; t++) {
             int start = t * entries.size() / n_threads;
             int end = (t + 1) * entries.size() / n_threads;
-            workers[t] = new Thread(() -> processCollisionCells(entries, grid, start, end));
-            workers[t].start();
+
+
+            futures.add(threadPool.submit(()->{
+                processCollisionCells(entries, grid, start, end);
+
+            }));
         }
 
-        for (int t = 0; t < n_threads; t++) {
+
+        for (Future<?> future : futures) {
             try {
-                workers[t].join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException("Worker thread interrupted", e);
+                future.get();
+            } catch (Exception e) {
+                throw new IllegalStateException("Collision task failed", e);
             }
         }
+
+
     }
 
     private void processCollisionCells(List<Map.Entry<Long, List<Ball>>> entries,
@@ -395,5 +438,9 @@ public class Board {
             return 0.0;
         }
         return resolveSmallBallsCollisionTotalNanos / (double) resolveSmallBallsCollisionMeasurements;
+    }
+
+    public void shutdown() {
+        threadPool.shutdown();
     }
 }
