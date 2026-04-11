@@ -22,9 +22,9 @@ public class Board {
     private boolean gameOver;
     private Ball.Type winner;
     private boolean useThreads = true;
-    private ExecutorService threadPool;
+    private final ExecutorService threadPool;
 
-    private int n_threads = 4;
+    private final int n_threads = 4;
     private long movingBallsTotalNanos;
     private long movingBallsMeasurements;
     private long resolveSmallBallsCollisionTotalNanos;
@@ -36,6 +36,7 @@ public class Board {
     }
 
     public void init(BoardConf conf) {
+
         gameOver = false;
         winner = Ball.Type.BOT;
         humanScore = 0;
@@ -92,7 +93,7 @@ public class Board {
                     future.get();
 
                 }catch (Exception e){
-                    e.printStackTrace();
+                    throw new IllegalStateException("Collision task failed", e);
                 }
             }
 
@@ -147,10 +148,7 @@ public class Board {
             int end = (t + 1) * entries.size() / n_threads;
 
 
-            futures.add(threadPool.submit(()->{
-                processCollisionCells(entries, grid, start, end);
-
-            }));
+            futures.add(threadPool.submit(()-> processCollisionCells(entries, grid, start, end)));
         }
 
 
@@ -169,6 +167,7 @@ public class Board {
                                        Map<Long, List<Ball>> grid,
                                        int start,
                                        int end) {
+        // noinspection DuplicatedCode
         for (int entryIndex = start; entryIndex < end; entryIndex++) {
             Map.Entry<Long, List<Ball>> entry = entries.get(entryIndex);
             long cellKey = entry.getKey();
@@ -198,6 +197,7 @@ public class Board {
     }
 
     private Map<Long, List<Ball>> buildCollisionGrid() {
+        // noinspection DuplicatedCode
         Map<Long, List<Ball>> grid = new HashMap<>();
         for (Ball ball : balls) {
             int cellX = (int) Math.floor((ball.getPos().x() - bounds.x0()) / collisionCellSize);
@@ -225,17 +225,19 @@ public class Board {
     }
 
     private void resolveBallPair(Ball first, Ball second) {
-        Object firstLock = first;
-        Object secondLock = second;
+        Object firstBall = first;
+        Object secondBall = second;
 
-        if (System.identityHashCode(firstLock) > System.identityHashCode(secondLock)) {
-            Object temp = firstLock;
-            firstLock = secondLock;
-            secondLock = temp;
+        if (System.identityHashCode(firstBall) > System.identityHashCode(secondBall)) {
+            Object temp = firstBall;
+            firstBall = secondBall;
+            secondBall = temp;
         }
 
-        synchronized (firstLock) {
-            synchronized (secondLock) {
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (firstBall) {
+            //noinspection SynchronizationOnLocalVariableOrMethodParameter
+            synchronized (secondBall) {
                 if (areColliding(first, second)) {
                     Ball.resolveCollision(first, second);
                     first.setLastTouchedBy(Ball.LastTouchedBy.NONE);
@@ -285,18 +287,15 @@ public class Board {
         }
     }
 
-    private boolean checkPlayerBallIsInHole(){
+    private void checkPlayerBallIsInHole(){
         if(isInsideHole(humanBall)){
             gameOver = true;
             winner =  Ball.Type.BOT;
-            return true;
         }
         if(isInsideHole(botBall)){
             gameOver = true;
             winner =  Ball.Type.HUMAN;
-            return true;
         }
-        return false;
     }
 
     private void handlePocketedBalls() {
@@ -315,14 +314,12 @@ public class Board {
         balls.removeAll(ballsToRemove);
     }
 
-    private boolean checkNoMoreSmallBalls(){
+    private void checkNoMoreSmallBalls(){
         if (balls.isEmpty()){
             gameOver = true;
             winner = humanScore>botScore ? humanBall.getType() : botBall.getType();
 
-            return true;
         }
-        return false;
     }
 
     public boolean isGameOver() {
@@ -335,10 +332,6 @@ public class Board {
 
     public List<Ball> getBalls() {
         return balls;
-    }
-
-    public Ball getPlayerBall() {
-        return humanBall;
     }
 
     public Ball getHumanBall() {
@@ -399,10 +392,6 @@ public class Board {
         this.useThreads = useThreads;
     }
 
-    public boolean isUsingThreads() {
-        return useThreads;
-    }
-
     public void resetPerformanceMetrics() {
         movingBallsTotalNanos = 0L;
         movingBallsMeasurements = 0L;
@@ -410,27 +399,11 @@ public class Board {
         resolveSmallBallsCollisionMeasurements = 0L;
     }
 
-    public long getMovingBallsTotalNanos() {
-        return movingBallsTotalNanos;
-    }
-
-    public long getMovingBallsMeasurements() {
-        return movingBallsMeasurements;
-    }
-
     public double getAverageMovingBallsNanos() {
         if (movingBallsMeasurements == 0) {
             return 0.0;
         }
         return movingBallsTotalNanos / (double) movingBallsMeasurements;
-    }
-
-    public long getResolveSmallBallsCollisionTotalNanos() {
-        return resolveSmallBallsCollisionTotalNanos;
-    }
-
-    public long getResolveSmallBallsCollisionMeasurements() {
-        return resolveSmallBallsCollisionMeasurements;
     }
 
     public double getAverageResolveSmallBallsCollisionNanos() {
