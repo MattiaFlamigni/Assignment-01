@@ -1,3 +1,5 @@
+package firstVersion;
+
 public record P2d(double x, double y)  {
 
     public P2d sum(V2d v){
@@ -9,7 +11,7 @@ public record P2d(double x, double y)  {
     }
     
     public String toString(){
-        return "P2d("+x+","+y+")";
+        return "firstVersion.P2d("+x+","+y+")";
     }
 
     public double x() {

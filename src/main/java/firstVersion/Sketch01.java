@@ -1,3 +1,5 @@
+package firstVersion;
+
 public class Sketch01 {
 
 	
@@ -10,8 +12,8 @@ public class Sketch01 {
 		 * - massive: 4500 small balls 
 		 */
 		
-		//var boardConf = new MinimalBoardConf();
-		// var boardConf = new LargeBoardConf();
+		//var boardConf = new firstVersion.MinimalBoardConf();
+		// var boardConf = new firstVersion.LargeBoardConf();
 		 var boardConf = new MassiveBoardConf();
 		
 		Board board = new Board();

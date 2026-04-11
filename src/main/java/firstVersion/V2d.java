@@ -1,3 +1,5 @@
+package firstVersion;
+
 public record V2d(double x, double y)  {
 
     public V2d sum(V2d v){
@@ -26,7 +28,7 @@ public record V2d(double x, double y)  {
     }
 
     public String toString(){
-        return "V2d("+x+","+y+")";
+        return "firstVersion.V2d("+x+","+y+")";
     }
     
     

@@ -1,3 +1,5 @@
+package firstVersion;
+
 import java.util.Random;
 
 public class GameController implements HumanInputListener {
@@ -26,7 +28,7 @@ public class GameController implements HumanInputListener {
 
     public void start() {
         if (this.view == null) {
-            throw new IllegalStateException("View must be attached before starting the controller");
+            throw new IllegalStateException("firstVersion.View must be attached before starting the controller");
         }
         resetGame();
 

@@ -1,3 +1,5 @@
+package firstVersion;
+
 public class View {
 
 	private ViewFrame frame;

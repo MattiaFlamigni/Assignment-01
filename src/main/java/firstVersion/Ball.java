@@ -1,3 +1,5 @@
+package firstVersion;
+
 public class Ball {
     enum Type {
         HUMAN,
@@ -109,7 +111,7 @@ public class Ball {
 	         * 
 	         */
 	        
-        	/* dvn = V2d(nx,ny) = dv unit vector */
+        	/* dvn = firstVersion.V2d(nx,ny) = dv unit vector */
     
         	double nx = dx / dist;
 	        double ny = dy / dist;

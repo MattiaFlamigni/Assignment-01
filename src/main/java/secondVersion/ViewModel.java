@@ -1,3 +1,5 @@
+package secondVersion;
+
 import java.util.ArrayList;
 
 record BallViewInfo(P2d pos, double radius) {}

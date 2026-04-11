@@ -1,3 +1,5 @@
+package secondVersion;
+
 public class RenderSynch {
 
 	private long nextFrameToRender;
