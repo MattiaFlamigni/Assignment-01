@@ -224,7 +224,7 @@ public class Board {
         }
     }
 
-    private void resolveBallPair(Ball first, Ball second) {
+    void resolveBallPair(Ball first, Ball second) {
         Object firstBall = first;
         Object secondBall = second;
 

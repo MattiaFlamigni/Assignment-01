@@ -1,0 +1,11 @@
+target = secondVersion.PooolJPFTest
+
+# Rimuoviamo la riga search.class che dava errore e usiamo quella di default
+# JPF userà la ricerca Depth First (DFS) che va benissimo per trovare deadlock
+
+# Assicurati che il classpath punti alla radice dei pacchetti (dove inizia 'secondVersion')
+# Se sei dentro src/main/java, il punto "." dovrebbe bastare
+classpath = .
+
+# Opzionale: per vedere meglio cosa succede
+report.console.finished = statistics,errors
