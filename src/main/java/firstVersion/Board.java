@@ -20,7 +20,7 @@ public class Board {
     private Ball.Type winner;
     private boolean useThreads = true;
 
-    private int n_threads = 4;
+    private int n_threads = Runtime.getRuntime().availableProcessors();;
     private Thread[] workers = new Thread[n_threads];
     private long movingBallsTotalNanos;
     private long movingBallsMeasurements;
