@@ -24,7 +24,7 @@ public class Board {
     private boolean useThreads = true;
     private final ExecutorService threadPool;
 
-    private final int n_threads = 4;
+    private final int n_threads = Runtime.getRuntime().availableProcessors();
     private long movingBallsTotalNanos;
     private long movingBallsMeasurements;
     private long resolveSmallBallsCollisionTotalNanos;
